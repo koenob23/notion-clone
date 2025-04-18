@@ -1,0 +1,38 @@
+.swagger-ui .info .title {
+  color: #2d3748;
+}
+
+.swagger-ui .opblock .opblock-summary-operation-id,
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__deprecated {
+  font-family: monospace;
+}
+
+.swagger-ui .opblock {
+  margin: 0 0 15px;
+  border-radius: 4px;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.swagger-ui .opblock .opblock-summary {
+  padding: 8px 20px;
+}
+
+.swagger-ui .btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.swagger-ui select {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.swagger-ui input[type=text] {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.swagger-ui .response-col_status {
+  font-family: monospace;
+} 

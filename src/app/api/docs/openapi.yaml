@@ -1,0 +1,337 @@
+openapi: 3.0.0
+info:
+  title: Notion Clone API
+  version: 1.0.0
+  description: API for managing pages with version history
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production server
+
+components:
+  schemas:
+    Page:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        isArchived:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageVersion'
+    
+    PageVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+          nullable: true
+        pageId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        pageId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - clerkAuth: []
+
+paths:
+  /pages:
+    get:
+      summary: List pages
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Page'
+                  total:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  currentPage:
+                    type: integer
+    
+    post:
+      summary: Create a new page
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Created page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /pages/{pageId}:
+    parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    get:
+      summary: Get a single page
+      responses:
+        '200':
+          description: Page details with versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+    
+    patch:
+      summary: Update a page
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+    
+    delete:
+      summary: Archive a page
+      responses:
+        '204':
+          description: Page archived successfully
+
+  /pages/{pageId}/restore:
+    parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    post:
+      summary: Restore an archived page
+      responses:
+        '200':
+          description: Restored page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+
+  /pages/{pageId}/versions/{versionId}/restore:
+    parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    post:
+      summary: Restore a specific version of a page
+      responses:
+        '200':
+          description: Page restored to specific version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+
+  /tasks:
+    post:
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                dueDate:
+                  type: string
+                  format: date-time
+                pageId:
+                  type: string
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+    get:
+      summary: Get all tasks for the current user
+      parameters:
+        - name: pageId
+          in: query
+          schema:
+            type: string
+          description: Filter tasks by page ID
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /health:
+    get:
+      summary: Check API health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  database:
+                    type: string
+                    enum: [connected, disconnected]
+        '500':
+          description: API is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  error:
+                    type: string 
